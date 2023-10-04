@@ -1,0 +1,55 @@
+namespace: nginx-golang-mysql
+nginx-golang-mysql:
+  defines: runnable
+  metadata:
+    name: nginx-golang-mysql
+    description: A Go server application with an Nginx proxy and a MariaDB/MySQL database.
+    icon: https://emojiapi.dev/api/v1/whale.svg
+  containers:
+    nginx-golang-mysql:
+      build: .
+  services:
+    proxy-port:
+      container: nginx-golang-mysql
+      port: 80
+      host-port: 80
+      publish: false
+      protocol: TCP
+      description: Main port used by the Nginx proxy server.
+    backend-port:
+      container: nginx-golang-mysql
+      port: 8000
+      host-port: 8000
+      publish: false
+      protocol: TCP
+      description: Main port used by the Go server.
+  connections:
+    database-connection:
+      target: mariadb-mysql/base
+      service: service
+  variables:
+    cgo-enabled:
+      env: CGO_ENABLED
+      type: string
+      description: Enable cgo in the Go build environment.
+      value: '0'
+    gopath:
+      env: GOPATH
+      type: string
+      description: Path for Go workspace.
+      value: /go
+    gocache:
+      env: GOCACHE
+      type: string
+      description: Location of the Go build cache.
+      value: /go-build
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      description: The name of the database
+      value: example
+    mysql-root-password-file:
+      env: MYSQL_ROOT_PASSWORD_FILE
+      type: string
+      description: Path to the password file for the database root user
+      value: '!!!SETME-USE-SECRETS!!!'

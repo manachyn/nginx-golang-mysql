@@ -1,0 +1,39 @@
+namespace: nginx-golang-mysql
+nginx-golang-mysql:
+  defines: runnable
+  metadata:
+    name: nginx-golang-mysql
+    description: >-
+      A simple Golang application using Nginx as a proxy server and MySQL as a
+      database for storing blog posts information.
+    icon: https://emojiapi.dev/api/v1/rocket.svg
+  containers:
+    nginx-golang-mysql:
+      build: .
+      dockerfile: backend/Dockerfile
+  services:
+    app-port:
+      container: nginx-golang-mysql
+      port: 8000
+      host-port: 8000
+      publish: false
+      protocol: TCP
+      description: Main application server port
+  connections:
+    mysql-database:
+      target: nginx-golang-mysql/db
+      service: monk-mysql-db
+  variables:
+    db-password:
+      env: DB_PASSWORD
+      type: string
+      description: Password for the database
+      value: '!!!SETME!!!'
+db:
+  defines: runnable
+  inherits: monk-mysql/db
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/nginx-golang-mysql
+    - nginx-golang-mysql/db

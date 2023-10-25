@@ -1,0 +1,58 @@
+namespace: nginx-golang-mysql
+nginx-golang-mysql:
+  defines: runnable
+  metadata:
+    name: nginx-golang-mysql
+    description: >-
+      A serverside application serving blog posts and using a mysql database for
+      storage.
+    icon: https://github.com/manachyn/nginx-golang-mysql
+  containers:
+    nginx-golang-mysql:
+      build: .
+      image: env-1753.registry.local/nginx-golang-mysql:main-df71184
+  services:
+    backend-service:
+      container: nginx-golang-mysql
+      port: 8000
+      host-port: 8000
+      publish: false
+      protocol: TCP
+      description: The port the backend service runs on.
+    proxy-service:
+      container: nginx-golang-mysql
+      port: 80
+      host-port: 80
+      publish: false
+      protocol: TCP
+      description: The nginx proxy service runs on this port.
+    database-service:
+      container: nginx-golang-mysql
+      port: 3306
+      host-port: 3306
+      publish: false
+      protocol: TCP
+      description: MySQL service port.
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/db
+      service: monk-mysql-db
+  variables:
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      description: The MySQL database to use.
+      value: example
+    mysql-root-password-file:
+      env: MYSQL_ROOT_PASSWORD_FILE
+      type: string
+      description: The file path where the MySQL root password is stored.
+      value: '!!!SETME-USE-SECRETS!!!'
+db:
+  defines: runnable
+  inherits: monk-mysql/db
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/nginx-golang-mysql
+    - nginx-golang-mysql/db

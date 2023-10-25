@@ -10,7 +10,8 @@ ENV GOCACHE /go-build
 
 COPY . .
 
-RUN go mod init
+RUN go mod init github.com/docker/awesome-compose/nginx-golang-mysql/backend
+RUN go mod tidy
 RUN go build -o /app/main ./main.go
 
 FROM alpine:3.15

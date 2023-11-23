@@ -1,0 +1,118 @@
+namespace: nginx-golang-mysql
+
+db:
+  defines: runnable
+  inherits: mariadb/mariadb
+  metadata:
+    name: db
+    description: MariaDB database used as the data store for the application
+    icon: https://www.vectorlogo.zone/logos/mariadb/mariadb-ar21.png
+  variables:
+    mariadb-database-name:
+      type: string
+      value: mariadb
+      description: ''
+    mariadb-image:
+      type: string
+      value: $mariadb-image-tag default("10.10")
+      description: ''
+    mariadb-image-tag:
+      type: string
+      value: latest
+      description: ''
+    mariadb-root-password:
+      type: string
+      value: 4wfoA7auxY
+      description: ''
+    mariadb-user-name:
+      type: string
+      value: mariadbuser
+      description: ''
+    mariadb-user-password:
+      type: string
+      value: Cz9mGzmRtW
+      description: ''
+    mysql-database:
+      type: string
+      value: $mariadb-database-name default("mariadb")
+      description: ''
+    mysql-password:
+      type: string
+      value: $mariadb-user-password default("Cz9mGzmRtW")
+      description: ''
+    mysql-root-password:
+      type: string
+      value: $mariadb-root-password default("4wfoA7auxY")
+      description: ''
+    mysql-user:
+      type: string
+      value: $mariadb-user-name default("mariadbuser")
+      description: ''
+
+mysql:
+  defines: runnable
+  inherits: monk-mysql/db
+  metadata:
+    name: mysql
+    description: >-
+      MySQL database, alternative to MariaDB, can be used as the data store for
+      the application
+    icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
+  variables:
+    image_tag:
+      type: string
+      value: latest
+      description: ''
+    monk_mysql_database:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_password:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_root_password:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_user:
+      type: string
+      value: monk
+      description: ''
+
+backend:
+  defines: runnable
+  metadata:
+    name: backend
+    description: Go backend service for the application
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    backend:
+      image: env-2534.registry.local/backend:main-df71184
+      build: .
+      dockerfile: backend/Dockerfile
+  services:
+    http-server:
+      description: HTTP server listening on this port
+      container: backend
+      port: 8000
+      host-port: 8000
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/db
+      service: mariadb
+  variables:
+    db-password:
+      env: DB_PASSWORD
+      type: string
+      value: Cz9mGzmRtW
+      description: Password for the database user
+
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/db
+    - nginx-golang-mysql/mysql
+    - nginx-golang-mysql/backend

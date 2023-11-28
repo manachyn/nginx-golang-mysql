@@ -1,0 +1,38 @@
+namespace: nginx-golang-mysql
+
+backend:
+  defines: runnable
+  metadata:
+    name: backend
+    description: The Go-based backend service for the web application.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    backend:
+      image: env-2057.registry.local/backend:main-df71184
+      build: .
+      dockerfile: backend/Dockerfile
+  services:
+    http-server:
+      description: HTTP server listening on this port
+      container: backend
+      port: 8000
+      host-port: 8000
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/db
+      service: db
+      optional: true
+      description: Connection to the MySQL database
+  variables:
+    db-password-file:
+      env: DB_PASSWORD_FILE
+      type: string
+      value: /run/secrets/db-password
+      description: Path to the file containing the database password
+
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/backend

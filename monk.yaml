@@ -1,0 +1,96 @@
+namespace: nginx-golang-mysql
+
+backend:
+  defines: runnable
+  metadata:
+    name: backend
+    description: A Go-based backend service
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    backend:
+      image: env-2135.registry.local/backend:main-df71184
+      build: .
+      dockerfile: backend/Dockerfile
+  services:
+    http-server-port:
+      description: HTTP server listening port
+      container: backend
+      port: 8000
+      host-port: 8000
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/db
+      service: mariadb
+      optional: true
+      description: Connection from the backend service to the database service
+    proxy-connection:
+      target: nginx-golang-mysql/proxy
+      service: '!!!SETME!!!'
+      optional: true
+      description: Connection from the backend service to the proxy service
+  variables:
+    db-password-file:
+      env: DB_PASSWORD_FILE
+      type: string
+      value: /run/secrets/db-password
+      description: Path to the file containing the database password
+    cgo-enabled:
+      env: CGO_ENABLED
+      type: string
+      value: '0'
+      description: Environment variable to enable or disable CGO
+    gopath:
+      env: GOPATH
+      type: string
+      value: /go
+      description: Environment variable to set the Go workspace path
+    gocache:
+      env: GOCACHE
+      type: string
+      value: /go-build
+      description: Environment variable to set the Go build cache path
+
+db:
+  defines: runnable
+  metadata:
+    name: db
+    description: A MariaDB database service
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    db:
+      image: env-2135.registry.local/db:main-df71184
+      build: .
+      dockerfile: Dockerfile.db
+  services:
+    mariadb:
+      description: MariaDB default port for database connections
+      container: db
+      port: 3306
+      host-port: 3306
+      publish: true
+      protocol: tcp
+  connections:
+    database-to-backend:
+      target: nginx-golang-mysql/backend
+      service: http-server-port
+      optional: true
+      description: The MariaDB database service connects to the backend service.
+  variables:
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      value: example
+      description: The name of the database to be created when the container starts.
+    mysql-root-password-file:
+      env: MYSQL_ROOT_PASSWORD_FILE
+      type: string
+      value: /run/secrets/mysql-root-password
+      description: The file path for the root password to the database.
+
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/backend
+    - nginx-golang-mysql/db

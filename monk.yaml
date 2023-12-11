@@ -1,0 +1,76 @@
+namespace: nginx-golang-mysql
+
+backend:
+  defines: runnable
+  metadata:
+    name: backend
+    description: Backend service written in Go
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    backend:
+      image: env-3577.registry.local/backend:main-df71184
+      build: .
+      dockerfile: backend/Dockerfile
+  services:
+    http-server:
+      description: HTTP server listening on this port
+      container: backend
+      port: 8000
+      host-port: 8000
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/db
+      service: mariadb-port
+      optional: true
+      description: Connection to the MariaDB database service
+    proxy-connection:
+      target: nginx-golang-mysql/proxy
+      service: http-server
+      optional: true
+      description: Connection from the proxy service to the backend service
+  variables: {}
+
+db:
+  defines: runnable
+  metadata:
+    name: db
+    description: MariaDB database service
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    db:
+      image: env-3577.registry.local/db:main-df71184
+      build: .
+      dockerfile: Dockerfile.db
+  services:
+    mariadb-port:
+      description: MariaDB default port for database connections
+      container: db
+      port: 3306
+      host-port: 3306
+      publish: true
+      protocol: tcp
+  connections:
+    database-backend-connection:
+      target: nginx-golang-mysql/backend
+      service: http-server
+      optional: true
+      description: MariaDB database service connects to the backend service
+  variables:
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      value: example
+      description: The name of the database to be created.
+    mysql-root-password-file:
+      env: MYSQL_ROOT_PASSWORD_FILE
+      type: string
+      value: /var/lib/mysql-root-password
+      description: The file path for the root password.
+
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/backend
+    - nginx-golang-mysql/db

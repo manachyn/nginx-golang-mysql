@@ -1,0 +1,14 @@
+FROM mariadb:10.5
+
+# Set environment variables
+ENV MYSQL_DATABASE=example \
+    MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
+
+# Expose port 3306 for the service
+EXPOSE 3306
+
+# Copy the password file to the container
+COPY db/password.txt /run/secrets/db-password
+
+# Run the database service
+CMD ["mysqld"]

@@ -1,0 +1,70 @@
+namespace: nginx-golang-mysql
+
+proxy:
+  defines: runnable
+  metadata:
+    name: proxy
+    description: Nginx proxy service
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    proxy:
+      image: env-4291.registry.local/proxy:main-df71184
+      build: .
+      dockerfile: Dockerfile.proxy
+  services:
+    http:
+      description: HTTP port for incoming web traffic
+      container: proxy
+      port: 80
+      host-port: 80
+      publish: true
+      protocol: tcp
+  connections:
+    proxy-to-backend:
+      target: nginx-golang-mysql/backend
+      service: '!!!SETME!!!'
+      optional: true
+      description: The proxy service forwards requests to the backend service.
+  variables: {}
+
+db:
+  defines: runnable
+  metadata:
+    name: db
+    description: MariaDB database service
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    db:
+      image: mariadb:10-focal
+      build: .
+  services:
+    mariadb-port:
+      description: MariaDB default port for database connections
+      container: db
+      port: 3306
+      host-port: 3306
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/backend
+      service: '!!!SETME!!!'
+      optional: true
+      description: MariaDB database service connects to the backend service
+  variables:
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      value: example
+      description: The name of the database used by the service.
+    mysql-root-password-file:
+      env: MYSQL_ROOT_PASSWORD_FILE
+      type: string
+      value: '!!!SETME!!!'
+      description: The file path where the root password for the database is stored.
+
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/proxy
+    - nginx-golang-mysql/db

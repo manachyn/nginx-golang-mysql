@@ -1,0 +1,66 @@
+namespace: nginx-golang-mysql
+
+backend:
+  defines: runnable
+  metadata:
+    name: backend
+    description: The backend service of the application, written in Go.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    backend:
+      image: env-4459.registry.local/backend:main-df71184
+      build: .
+      dockerfile: backend/Dockerfile
+  services:
+    http-backend:
+      description: HTTP API port for the backend service
+      container: backend
+      port: 8000
+      host-port: 8000
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: nginx-golang-mysql/db
+      service: '!!!SETME!!!'
+      optional: true
+      description: Connection to the MariaDB database service
+  variables:
+    db-password-file:
+      env: DB_PASSWORD_FILE
+      type: string
+      value: /run/secrets/db-password
+      description: Path to the file containing the database password
+
+proxy:
+  defines: runnable
+  metadata:
+    name: proxy
+    description: The Nginx proxy service routing traffic to the backend.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    proxy:
+      image: env-4459.registry.local/proxy:main-df71184
+      build: .
+      dockerfile: Dockerfile.proxy
+  services:
+    http:
+      description: HTTP traffic
+      container: proxy
+      port: 80
+      host-port: 80
+      publish: true
+      protocol: tcp
+  connections:
+    proxy-to-backend:
+      target: nginx-golang-mysql/backend
+      service: http-backend
+      optional: true
+      description: The Nginx proxy service routes traffic to the backend service.
+  variables: {}
+
+stack:
+  defines: group
+  members:
+    - nginx-golang-mysql/backend
+    - nginx-golang-mysql/proxy
